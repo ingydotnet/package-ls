@@ -4,64 +4,64 @@
 ###
 
 # All the end-user targets are .PHONY:
-.PHONY: build test clean purge help
+.PHONY: init update build test clean purge help
 
 # Include the project specific environment:
 -include .env.mk
 
+TARGET ?= npm
 PACKAGE ?= ../package-ls
 # TODO assert the PACKAGE dir exists.
 TEMPLATE := $(PACKAGE)/template
 TOOL := $(PACKAGE)/tool
-TARGET ?= npm
 
 # Define all the directories we'll need so we make pre-mkdir them:
-ifdef SRC_TESTML
-    NPM_TESTML := test/testml
-    NPM_DIRS := $(NPM_TESTML)
+ifdef SOURCE_TESTML
+    TARGET_TESTML := test/testml
+    TARGET_DIRS := $(TARGET_TESTML)
 endif
-NPM_DIRS := \
-	$(NPM_DIRS) \
+TARGET_DIRS := \
+	$(TARGET_DIRS) \
 	$(shell find lib -mindepth 1 -type d) \
 	$(shell find test -mindepth 1 -type d) \
 	$(shell cd $(PACKAGE); find test -mindepth 1 -type d) \
 	$(shell find doc -mindepth 0 -type d)
-NPM_DIRS := $(NPM_DIRS:%=$(TARGET)/%)
+TARGET_DIRS := $(TARGET_DIRS:%=$(TARGET)/%)
 
 # Find all the LiveScript code files and their JavaScript targets:
-SRC_CODE := $(shell find lib -name *.ls)
-NPM_CODE := $(SRC_CODE:%.ls=$(TARGET)/%.js)
+SOURCE_CODE := $(shell find lib -name *.ls)
+TARGET_CODE := $(SOURCE_CODE:%.ls=$(TARGET)/%.js)
 
 # Find all the local test files. Setup LS->JS conversions:
-SRC_TEST := $(shell find test -type f) \
+SOURCE_TEST := $(shell find test -type f) \
 	$(shell cd $(PACKAGE); find test -type f)
-NPM_TEST := $(SRC_TEST:%=$(TARGET)/%)
-NPM_TEST := $(NPM_TEST:$(TARGET)/test/lib/%.ls=$(TARGET)/test/lib/%.js)
+TARGET_TEST := $(SOURCE_TEST:%=$(TARGET)/%)
+TARGET_TEST := $(TARGET_TEST:$(TARGET)/test/lib/%.ls=$(TARGET)/test/lib/%.js)
 
 # Setup the TestML environment (if we are using that):
-ifdef SRC_TESTML
-    SRC_TML_FILES ?= $(shell find $(SRC_TESTML) -name *.tml)
-    NPM_TML_FILES := $(SRC_TML_FILES:$(SRC_TESTML)/%=$(TARGET)/$(NPM_TESTML)/%)
-    NPM_TML_TESTS ?= $(SRC_TML_FILES:$(SRC_TESTML)/%.tml=$(TARGET)/test/%.ls)
+ifdef SOURCE_TESTML
+    SOURCE_TML_FILES ?= $(shell find $(SOURCE_TESTML) -name *.tml)
+    TARGET_TML_FILES := $(SOURCE_TML_FILES:$(SOURCE_TESTML)/%=$(TARGET)/$(TARGET_TESTML)/%)
+    TARGET_TML_TESTS ?= $(SOURCE_TML_FILES:$(SOURCE_TESTML)/%.tml=$(TARGET)/test/%.ls)
 endif
 
 # Gather the doc files:
-SRC_DOCS := $(shell find doc -type f)
-NPM_DOCS := $(SRC_DOCS:%=$(TARGET)/%)
+SOURCE_DOCS := $(shell find doc -type f)
+TARGET_DOCS := $(SOURCE_DOCS:%=$(TARGET)/%)
 
 # Gather the other ancillary packaging files for an NPM package:
-SRC_TEXT := $(shell cd $(TEMPLATE); echo LICENSE* README*)
-NPM_TEXT := $(SRC_TEXT:%=$(TARGET)/%)
+SOURCE_TEXT := $(shell cd $(TEMPLATE); echo LICENSE* README*)
+TARGET_TEXT := $(SOURCE_TEXT:%=$(TARGET)/%)
 
 # Define all the NPM package target files:
 ALL := \
-	$(NPM_DIRS) \
-	$(NPM_CODE) \
-	$(NPM_TEST) \
-	$(NPM_TML_FILES) \
-	$(NPM_TML_TESTS) \
-	$(NPM_DOCS) \
-	$(NPM_TEXT) \
+	$(TARGET_DIRS) \
+	$(TARGET_CODE) \
+	$(TARGET_TEST) \
+	$(TARGET_TML_FILES) \
+	$(TARGET_TML_TESTS) \
+	$(TARGET_DOCS) \
+	$(TARGET_TEXT) \
 	$(TARGET)/package.json \
 	$(TARGET)/Makefile \
 
@@ -98,8 +98,8 @@ clean purge:
 
 debug:
 	@for d in $(ALL); do echo $$d; done
-	@echo MAKEFILE_LIST $(MAKEFILE_LIST)
-	@echo CURDIR $(CURDIR)
+	# @echo MAKEFILE_LIST $(MAKEFILE_LIST)
+	# @echo CURDIR $(CURDIR)
 
 
 # These rules are where the action happens. Define what is needed in order to
@@ -110,7 +110,7 @@ Makefile: $(PACKAGE)/Makefile
 .gitignore: $(PACKAGE)/gitignore
 	ln -fs $< $@
 
-$(NPM_DIRS):
+$(TARGET_DIRS):
 	mkdir -p $@
 
 $(TARGET)/lib/%.js: lib/%.ls
@@ -125,10 +125,10 @@ $(TARGET)/test/lib/%.js: $(PACKAGE)/test/lib/%.ls
 $(TARGET)/test/%: test/%
 	cp $< $@
 
-$(NPM_TEXT):
+$(TARGET_TEXT):
 	cp $(@:$(TARGET)/%=$(TEMPLATE)/%) $(TARGET)/$(@:$(TARGET)/%=%)
 
-$(NPM_DOCS):
+$(TARGET_DOCS):
 	cp $(@:$(TARGET)/%=%) $(TARGET)/$(@:$(TARGET)/%=%)
 
 $(TARGET)/package.json: package.yaml
@@ -140,6 +140,5 @@ $(TARGET)/Makefile: $(PACKAGE)/npm.mk
 $(TARGET)/test/%.ls: $(TEMPLATE)/testml.ls
 	perl -pe 's/%NAME%/$(@:$(TARGET)/test/%.ls=%)/g' $< > $@
 
-.SECONDEXPANSION:
-$(TARGET)/$(NPM_TESTML)/%.tml: $(SRC_TESTML)/%.tml
+$(TARGET)/$(TARGET_TESTML)/%.tml: $(SOURCE_TESTML)/%.tml
 	cp $< $@
