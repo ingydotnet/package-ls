@@ -1,0 +1,16 @@
+= package-ls
+
+This repository contains tools and parts for creating LiveScript packages.
+
+= Usage
+
+    > git clone https://github.com/ingydotnet/package-ls.git
+    > mkdir foo-ls
+    > cd foo-ls
+    > make -f ../package-ls/Makefile init
+    > make build
+    > make test
+    > make install
+    > make release
+
+

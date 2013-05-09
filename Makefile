@@ -107,7 +107,7 @@ debug:
 Makefile: $(PACKAGE)/Makefile
 	ln -fs $< $@
 
-.gitignore: $(PACKAGE)/gitignore
+.gitignore: $(PACKAGE)/git/gitignore
 	ln -fs $< $@
 
 $(TARGET_DIRS):
@@ -134,7 +134,7 @@ $(TARGET_DOCS):
 $(TARGET)/package.json: package.yaml
 	$(TOOL)/cdent-package-yaml-converter $< > $@
 
-$(TARGET)/Makefile: $(PACKAGE)/npm.mk
+$(TARGET)/Makefile: $(TEMPLATE)/Makefile
 	cp $< $@
 
 $(TARGET)/test/%.ls: $(TEMPLATE)/testml.ls
